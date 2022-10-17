@@ -5,7 +5,7 @@ from utils import (linear_scale_forward, log_scale_forward, start_cluster,
 from hnn_core import jones_2009_model
 
 nsbi_sims = 100_000
-tstop = 
+tstop = 500
 dt = 0.5
 
 net = jones_2009_model()
@@ -21,9 +21,6 @@ prior_dict = {'gbar_evprox_1_L2Pyr_ampa': {'bounds': (1e-10, 1e-1), 'rescale_fun
                'sigma_t_evdist_1': {'bounds': (1, 100), 'rescale_function': linear_scale_forward},
                't_evprox_1': {'bounds': (200, 300), 'rescale_function': linear_scale_forward},
                't_evdist_1': {'bounds': (200, 300), 'rescale_function': linear_scale_forward}} 
-
-
-
 
 with open(f'{save_path}/sbi_sims/prior_dict.pkl', 'wb') as f:
     dill.dump(prior_dict, f)

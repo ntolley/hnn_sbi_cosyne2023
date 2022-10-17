@@ -181,12 +181,7 @@ def train_posterior(data_path, ntrain_sims, x_noise_amp, theta_noise_amp, window
                        'spike_rates': {
                            'embedding_func': torch.nn.Identity,
                            'embedding_dict': dict(), 'feature_func': spike_rate_func,
-                           'data_type': 'spike_gids'},
-                       
-                       #'pca4_spike_rates': {
-                       #    'embedding_func': torch.nn.Identity,
-                       #    'embedding_dict': dict(), 'feature_func': pca4_spike_rate_func,
-                       #    'data_type': 'dpl_spike_gids'}
+                           'data_type': 'spike_gids'}
                       }
     
 
