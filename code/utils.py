@@ -655,6 +655,9 @@ def hnn_beta_param_function(net, theta_dict):
         'sigma_t_evprox_1', 'sigma_t_evdist_1',
         't_evprox_1', 't_evdist_1' 
     """
+    prox_seed = rng.integers(1000)
+    dist_seed = rng.integers(1000)
+    
     weights_ampa_p1 = {'L2_pyramidal': theta_dict['gbar_evprox_1_L2Pyr_ampa'],
                         'L5_pyramidal': theta_dict['gbar_evprox_1_L5Pyr_ampa']}
 
@@ -670,12 +673,12 @@ def hnn_beta_param_function(net, theta_dict):
     net.add_evoked_drive(
         'beta_prox', mu=theta_dict['t_evprox_1'], sigma=theta_dict['sigma_t_evprox_1'], numspikes=1, weights_ampa=weights_ampa_p1,
         weights_nmda=weights_nmda_p1, location='proximal',
-        synaptic_delays=synaptic_delays, seedcore=5)
+        synaptic_delays=synaptic_delays, event_seed=prox_seed)
     
     net.add_evoked_drive(
         'beta_dist', mu=theta_dict['t_evdist_1'], sigma=theta_dict['sigma_t_evdist_1'], numspikes=1, weights_ampa=weights_ampa_d1,
         weights_nmda=weights_nmda_d1, location='distal',
-        synaptic_delays=synaptic_delays, seedcore=3)
+        synaptic_delays=synaptic_delays, event_seed=dist_seed)
 
 
 def load_prerun_simulations(dpl_files, spike_times_files, spike_gids_files,
@@ -735,14 +738,14 @@ class PriorBetaFiltered():
                                 num_blocks=2,
                                 use_residual_blocks=False,
                                 random_mask=False,
-                                activation=tanh,
+                                activation=torch.tanh,
                                 dropout_probability=0.0,
                                 use_batch_norm=True))
         transform = CompositeTransform(transforms)
         return Flow(transform, base_dist)
 
     def sample(self, sample_shape, return_acc_rate=False):
-        base_prior = PriorBeta(self.parameters)        
+        base_prior = UniformPrior(self.parameters)        
         nsamples = sample_shape[0]
         nsamples_keep = 0
         samples_keep = torch.tensor([])
