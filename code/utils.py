@@ -100,7 +100,7 @@ def start_cluster():
     """Reserve SLURM resources using Dask Distributed interface"""
      # Set up cluster and reserve resources
     cluster = SLURMCluster(
-        cores=32, processes=32, queue='compute', memory="256GB", walltime="5:00:00",
+        cores=32, processes=32, queue='compute', memory="256GB", walltime="10:00:00",
         job_extra=['-A csd403', '--nodes=1'], log_directory=os.getcwd() + '/slurm_out')
 
     client = Client(cluster)
@@ -109,7 +109,7 @@ def start_cluster():
     
     client.cluster.scale(num_cores)
         
-def train_posterior(data_path, ntrain_sims, x_noise_amp, theta_noise_amp, window_samples):
+def train_posterior(data_path, ntrain_sims, x_noise_amp, theta_noise_amp, window_samples, suffix='sbi'):
     """Train sbi posterior distribution"""
     posterior_dict = dict()
     posterior_dict_training_data = dict()
@@ -123,11 +123,8 @@ def train_posterior(data_path, ntrain_sims, x_noise_amp, theta_noise_amp, window
     limits = list(prior_dict.values())
 
     # x_orig stores full waveform to be used for embedding
-    x_orig, theta_orig = np.load(f'{data_path}/sbi_sims/dpl_sbi.npy'), np.load(f'{data_path}/sbi_sims/theta_sbi.npy')
+    x_orig, theta_orig = np.load(f'{data_path}/sbi_sims/dpl_{suffix}.npy'), np.load(f'{data_path}/sbi_sims/theta_{suffix}.npy')
     x_orig, theta_orig = x_orig[:ntrain_sims, window_samples[0]:window_samples[1]], theta_orig[:ntrain_sims, :]
-
-    spike_gids_orig = np.load(f'{data_path}/sbi_sims/spike_gids_sbi.npy', allow_pickle=True)
-    spike_gids_orig = spike_gids_orig[:ntrain_sims]
 
     # Add noise for regularization
     x_noise = rng.normal(loc=0.0, scale=x_noise_amp, size=x_orig.shape)
@@ -155,18 +152,12 @@ def train_posterior(data_path, ntrain_sims, x_noise_amp, theta_noise_amp, window
     with open(posterior_metadata_save_label, 'wb') as output_file:
             dill.dump(posterior_metadata, output_file)
             
-    raw_data_type = {'dpl': x_orig_noise, 'spike_gids': spike_gids_orig,
-                     'dpl_spike_gids': {'dpl': x_orig_noise, 'spike_gids': spike_gids_orig}}
+    raw_data_type = {'dpl': x_orig_noise}
 
-    input_type_list = {'pca4_spike_rates': {
-                           'embedding_func': torch.nn.Identity,
-                           'embedding_dict': dict(), 'feature_func': pca4_spike_rate_func,
-                           'data_type': 'dpl_spike_gids'},
-        
-                        'raw_waveform': {
-                           'embedding_func': torch.nn.Identity,
-                           'embedding_dict': dict(), 'feature_func': torch.nn.Identity(),
-                           'data_type': 'dpl'},
+    input_type_list = {#'raw_waveform': {
+                       #    'embedding_func': torch.nn.Identity,
+                       #    'embedding_dict': dict(), 'feature_func': torch.nn.Identity(),
+                       #    'data_type': 'dpl'},
         
                        'pca30': {
                            'embedding_func': torch.nn.Identity,
@@ -176,13 +167,7 @@ def train_posterior(data_path, ntrain_sims, x_noise_amp, theta_noise_amp, window
                        'pca4': {
                            'embedding_func': torch.nn.Identity,
                            'embedding_dict': dict(), 'feature_func': pca4.transform, 
-                           'data_type': 'dpl'},
-    
-                       'spike_rates': {
-                           'embedding_func': torch.nn.Identity,
-                           'embedding_dict': dict(), 'feature_func': spike_rate_func,
-                           'data_type': 'spike_gids'}
-                      }
+                           'data_type': 'dpl'}}
     
 
     # Train a posterior for each input type and save state_dict

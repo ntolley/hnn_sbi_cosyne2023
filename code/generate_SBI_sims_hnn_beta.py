@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 from torch import optim
 
-nsbi_sims = 10_000
+nsbi_sims = 100_000
 num_prior_fits = 2
 tstop = 500
 dt = 0.5
@@ -38,8 +38,8 @@ with open(f'{save_path}/sbi_sims/sim_metadata.pkl', 'wb') as f:
 start_cluster() # reserve resources for HNN simulations
 
 # Define filtering steps
-#filters = [filter_borders, filter_nzeros, filter_peakproeminence, filter_peaktime, filter_removeoutliers]
-filters = [filter_borders]
+filters = [filter_borders, filter_nzeros, filter_peakproeminence, filter_peaktime, filter_removeoutliers]
+#filters = [filter_borders]
 
 for flow_idx in range(num_prior_fits):
     if flow_idx == 0:
@@ -62,7 +62,7 @@ for flow_idx in range(num_prior_fits):
     prior_filtered = PriorBetaFiltered(parameters=list(prior_dict.keys()))
     optimizer = optim.Adam(prior_filtered.flow.parameters())
 
-    num_iter = 100
+    num_iter = 5000
     for i in tqdm(range(num_iter)):
         optimizer.zero_grad()
         loss = -prior_filtered.flow.log_prob(inputs=theta_filter).mean()
